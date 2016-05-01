@@ -237,11 +237,6 @@ while (true) {
     var thirdInput = readline(); // south tile you can see (# - wall, _ - empty space)
     var fourthInput = readline(); // west tile you can see (# - wall, _ - empty space)
 
-    printErr('firstInput: ' + firstInput);
-    printErr('secondInput: ' + secondInput);
-    printErr('thirdInput: ' + thirdInput);
-    printErr('fourthInput: ' + fourthInput);
-
     for (var i = 0; i < thirdInitInput; i++) {
         var inputs = readline().split(' '); // current coordinates for each mobile on the map, last will be player
         if (gameState.gameModels.length < thirdInitInput) {
