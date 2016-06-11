@@ -1,3 +1,8 @@
+/*   Possible optimization :
+*    1 - Use more efficient data structures, the JS array is flexible to be both stack and queue struct types, but it is very unefficient as a queue used here.
+*    2 - Apply tree structure, for storage of nodes after first BFS exploration. 
+*    I believe this will help to minimize amount of subsequent BFS runs instead of running it for each found node in the longest path.
+*/
 'use strict';
 
 function Graph() {
@@ -62,13 +67,12 @@ Graph.prototype.removeEdge = function (data1) {
 };
 
 Graph.prototype.calculateCentricities = function () {
+    printErr(this.vertexes.length);
     let startNode = this.vertexes[0];
     let lastElement = this.RunBFSOverGraph(startNode);
     let radius = startNode.centricity = lastElement.depth;
 
     let nextParent = lastElement.parent;
-
-    printErr('vertexes length: ' + this.vertexes.length);
 
     let nodesToExplore = [];
 
@@ -83,14 +87,43 @@ Graph.prototype.calculateCentricities = function () {
         }
     }
 
-    while (nodesToExplore.length > 0) {
-        nextParent = nodesToExplore.shift();
+    printErr(nodesToExplore.length);
+
+    // brute force it, if the path is small
+    //     while (nodesToExplore.length > 0) {
+    //         nextParent = nodesToExplore.shift();
+    //         let result = this.RunBFSOverGraph(nextParent);
+
+    //         if (radius > result.depth) {
+    //             radius = nextParent.centricity = result.depth;
+    //         }
+    //     }
+    // }
+
+    // Instead of brute forcing the list of nodes.
+    // We will start looking for the center nodes in the pass, untill there will be no verticles with lower centricity then current found
+    // Also will use splice for the center elements, instead of enefficent shifting of array
+    // For enormously large graphs it should be optimized on the level of nodes creation
+    let turnesRadiusIsUnchanged = 0;
+
+    for (let i = parseInt(nodesToExplore.length / 2); i < nodesToExplore.length;) {
+        if (turnesRadiusIsUnchanged >= 5) {
+            break;
+        }
+
+        nextParent = nodesToExplore[i];
+        nodesToExplore.splice(i, 1);
         let result = this.RunBFSOverGraph(nextParent);
 
         if (radius > result.depth) {
             radius = nextParent.centricity = result.depth;
+            turnesRadiusIsUnchanged = 0;
+        }
+        else {
+            turnesRadiusIsUnchanged += 1;
         }
     }
+    // }
 
     this.radius = radius;
     this.diameter = this.radius * 2;
