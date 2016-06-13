@@ -67,7 +67,6 @@ Graph.prototype.removeEdge = function (data1) {
 };
 
 Graph.prototype.calculateCentricities = function () {
-    printErr(this.vertexes.length);
     let startNode = this.vertexes[0];
     let lastElement = this.RunBFSOverGraph(startNode);
     let radius = startNode.centricity = lastElement.depth;
@@ -86,8 +85,6 @@ Graph.prototype.calculateCentricities = function () {
             break;
         }
     }
-
-    printErr(nodesToExplore.length);
 
     // brute force it, if the path is small
     //     while (nodesToExplore.length > 0) {
