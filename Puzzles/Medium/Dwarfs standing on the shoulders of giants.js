@@ -6,7 +6,7 @@ function Graph() {
     this.distance = undefined;
 }
 
-Graph.prototype.clearDepthValues = function() {
+Graph.prototype.clearDepthValues = function () {
     for (let i = 0; i < this.vertexes.length; i++) {
         let current = this.vertexes[i];
         current.depth = -1;
@@ -14,7 +14,7 @@ Graph.prototype.clearDepthValues = function() {
     }
 };
 
-Graph.prototype.addEdge = function(data1, data2) {
+Graph.prototype.addEdge = function (data1, data2) {
     let vertex1;
     let vertex2;
 
@@ -33,9 +33,10 @@ Graph.prototype.addEdge = function(data1, data2) {
         vertex2 = new Vertex(data2);
     }
 
-    vertex1.addEdge(vertex2);
+    vertex1.addEdge(vertex2, 1);
     vertex2.isInfluencer = false;
-    vertex2.influencedBy.push(vertex1);
+    vertex2.addEdge(vertex1, 0);
+    vertex2.parents.push(vertex1);
 
     if (index1 === -1) {
         this.vertexes.push(vertex1);
@@ -46,7 +47,7 @@ Graph.prototype.addEdge = function(data1, data2) {
     }
 };
 
-Graph.prototype.calculateCentricities = function() {
+Graph.prototype.calculateCentricities = function () {
     let distance = -1;
 
     for (let i = 0; i < this.vertexes.length; i++) {
@@ -58,7 +59,7 @@ Graph.prototype.calculateCentricities = function() {
 
     for (let i = 0; i < this.influencers.length; i++) {
         let startNode = this.influencers[i];
-        let lastElement = this.RunBFSOverGraph(startNode);
+        let lastElement = this.RunBFSOverGraph(startNode, true);
 
         if (lastElement.depth > distance) {
             distance = lastElement.depth;
@@ -68,7 +69,20 @@ Graph.prototype.calculateCentricities = function() {
     this.distance = distance;
 };
 
-Graph.prototype.RunBFSOverGraph = function(node) {
+Graph.prototype.FindAllDisconnectedParts = function (influencers) {  
+    let groupedGraphs = new Map();
+    let vertexesToExamine = 
+
+    let currentGraph = []; 
+
+    for (let i = 0; i < this.vertexes.length; i++) {
+        
+    }
+
+    return graphs;
+};
+
+Graph.prototype.RunBFSOverGraph = function (node, isDirected) {
     let queue = []; // ^_^ hope the shift will work this time
     this.clearDepthValues();
     let maxCost = 0;
@@ -86,13 +100,25 @@ Graph.prototype.RunBFSOverGraph = function(node) {
         }
 
         for (let i = 0; i < first.edges.length; i++) {
-            let neighbour = first.edges[i].getToVertex(first);
-            if (neighbour.influencedBy.length == 1) {
-                neighbour.parent = first;
-                queue.push(neighbour);
-                neighbour.isVisited = true;
-            } else {
-                neighbour.isVisited = true;
+            let edge = first.edges[i];
+            if (isDirected) {
+                if (edge.weight > 0) {
+                    let neighbour = edge.getToVertex(first);
+                    if (neighbour.parents.length == 1) {
+                        neighbour.parent = first;
+                        queue.push(neighbour);
+                    }
+                }
+            }
+            else {
+                let neighbour = edge.getToVertex(first);
+                if (neighbour.parents.length == 1) {
+                    neighbour.parent = first;
+                    queue.push(neighbour);
+                    neighbour.isVisited = true;
+                } else {
+                    neighbour.isVisited = true;
+                }
             }
         }
     }
@@ -100,7 +126,7 @@ Graph.prototype.RunBFSOverGraph = function(node) {
     return lastElement;
 };
 
-Graph.prototype.vertexDataExists = function(data) {
+Graph.prototype.vertexDataExists = function (data) {
     for (let i = 0; i < this.vertexes.length; i++) {
         if (this.vertexes[i].data === data) {
             return i;
@@ -110,7 +136,7 @@ Graph.prototype.vertexDataExists = function(data) {
     return -1;
 };
 
-Graph.prototype.vertexExists = function(vertex) {
+Graph.prototype.vertexExists = function (vertex) {
     for (let i = 0; i < this.vertexes.length; i++) {
         if (this.vertexes[i].equals(vertex)) {
             return i;
@@ -122,7 +148,7 @@ Graph.prototype.vertexExists = function(vertex) {
 
 function Vertex(data) {
     this.edges = [];
-    this.influencedBy = [];
+    this.parents = [];
     this.depth = -1;
     this.data = data;
     this.parent = undefined;
@@ -131,7 +157,7 @@ function Vertex(data) {
     this.isVisited = false;
 }
 
-Vertex.prototype.equals = function(edge) {
+Vertex.prototype.equals = function (edge) {
     if (edge.data === this.data) {
         return true;
     }
@@ -139,7 +165,7 @@ Vertex.prototype.equals = function(edge) {
     return false;
 };
 
-Vertex.prototype.edgeExists = function(edge) {
+Vertex.prototype.edgeExists = function (edge) {
     for (let i = 0; i < this.edges.length; i++) {
         if (this.edges[i].equals(edge)) {
             return i;
@@ -149,7 +175,7 @@ Vertex.prototype.edgeExists = function(edge) {
     return -1;
 };
 
-Vertex.prototype.addEdge = function(vertex, weight) {
+Vertex.prototype.addEdge = function (vertex, weight) {
     let edge = new Edge(this, vertex, weight);
     if (this.edgeExists(edge) === -1) {
         this.edges.push(edge);
@@ -159,7 +185,7 @@ Vertex.prototype.addEdge = function(vertex, weight) {
     return false;
 };
 
-Vertex.prototype.removeEdge = function(vertex) {
+Vertex.prototype.removeEdge = function (vertex) {
     let edge = new Edge(this, vertex, 0);
     let index = this.edgeExists(edge);
     if (index >= 0) {
@@ -176,7 +202,7 @@ function Edge(vertex1, vertex2, weight) {
     this.weight = weight;
 }
 
-Edge.prototype.equals = function(edge) {
+Edge.prototype.equals = function (edge) {
     if (edge.vertex1.equals(this.vertex1) && edge.vertex2.equals(this.vertex2)) {
         return true;
     }
@@ -184,7 +210,7 @@ Edge.prototype.equals = function(edge) {
     return false;
 };
 
-Edge.prototype.getToVertex = function(node) {
+Edge.prototype.getToVertex = function (node) {
     return node.equals(this.vertex1) ? this.vertex2 : this.vertex1;
 };
 
