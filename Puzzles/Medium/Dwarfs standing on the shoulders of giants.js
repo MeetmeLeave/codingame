@@ -59,53 +59,62 @@ Graph.prototype.calculateCentricities = function() {
 
     let graphs = this.FindAllDisconnectedParts();
 
-    for(let j = 0; j < this.graphs.keys().length; j++){
-        for (let i = 0; i < this.influencers.length; i++) {
-            let startNode = this.influencers[i];
+    printErr('graphs: ' + graphs);
+
+    for (let j = 0; j < this.graphs.keys().length; j++) {
+        let currentGraphsDistance = 0;
+        let currentGraphs = this.graphs.keys()[j];
+        for (let i = 0; i < this.currentGraphs.length; i++) {
+            let startNode = this.currentGraphs[i];
             let lastElement = this.RunBFSOverGraph(startNode, true);
 
-            if (lastElement.depth > distance) {
-                distance = lastElement.depth;
+            if (lastElement.depth > currentGraphsDistance) {
+                currentGraphsDistance = lastElement.depth;
             }
         }
 
+        distance += currentGraphsDistance;
     }
 
     this.distance = distance;
 };
 
 Graph.prototype.FindAllDisconnectedParts = function() {
-    let groupedGraphs = new Map();
+    let groupedGraphs = [];
     let vertexesToExamine = this.vertexes.splice(0);
-
+    printErr('vertexesToExamine: ' + vertexesToExamine);
     let currentGraph = [];
-
 
     while (vertexesToExamine.length > 0) {
         this.RunBFSOverGraph(vertexesToExamine[0], false);
-
-        for (let i = 0; i < this.vertexesToExamine.length;) {
+        printErr('vertexesToExamine.length: ' + vertexesToExamine.length);
+        for (let i = 0; i < vertexesToExamine.length;) {
             let vert = vertexesToExamine[i];
-            
+            printErr('vert.data: ' + vert.data);
+            printErr('vert.isVisited: ' + vert.isVisited);
+            printErr('i: ' + i);
+
             if (vert.isVisited) {
 
-                for(let j=0; j< this.influencers.length; j++){
+                for (let j = 0; j < this.influencers.length; j++) {
                     let inf = this.influencers[j];
-                    if(inf.equals(vert)){
+                    if (inf.equals(vert)) {
                         currentGraph.push(inf);
                         break;
                     }
                 }
-
+                printErr('currentGraph.leng: ' + currentGraph.length);
                 vertexesToExamine.splice[i, 1];
+            } else {
+                ++i;
+                printErr('i++: ' + i);
             }
-            else{
-                i++;
-            }
+
+            printErr('vertexesToExamine.length: ' + vertexesToExamine.length);
         }
 
-        if(this.vertexesToExamine.length == i + 1){
-            groupedGraphs.set(currentGraph, 0);
+        if (vertexesToExamine.length == i + 1) {
+            groupedGraphs.push(currentGraph);
             currentGraph = [];
         }
     }
@@ -123,6 +132,8 @@ Graph.prototype.RunBFSOverGraph = function(node, isDirected) {
 
     while (queue.length > 0) {
         let first = queue.shift();
+        first.isVisited = true;
+        printErr('first.data: ' + first.data);
         first.depth = first.parent !== undefined ? first.parent.depth + 1 : 1;
 
         if (maxCost < first.depth) {
@@ -142,11 +153,9 @@ Graph.prototype.RunBFSOverGraph = function(node, isDirected) {
                 }
             } else {
                 let neighbour = edge.getToVertex(first);
-                if (neighbour.parents.length == 1) {
+                if (!neighbour.isVisited) {
                     neighbour.parent = first;
                     queue.push(neighbour);
-                    neighbour.isVisited = true;
-                } else {
                     neighbour.isVisited = true;
                 }
             }
