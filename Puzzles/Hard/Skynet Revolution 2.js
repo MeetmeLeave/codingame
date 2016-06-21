@@ -43,7 +43,7 @@ function Dikstra(matrix, startNode) {
     return path;
 }
 
-Dikstra.prototype.nextNode = function(path, visitedNodes) {
+Dikstra.prototype.nextNode = function (path, visitedNodes) {
     let result;
 
     for (let i = 0; i < path.length; i++) {
@@ -54,6 +54,13 @@ Dikstra.prototype.nextNode = function(path, visitedNodes) {
 
     return result;
 };
+
+function VirusStepNode() {
+    this.edgeA = -1;
+    this.edgeB = -1;
+
+    this.agentNextStep = -1;
+}
 
 let matrix = [];
 let exits = [];
@@ -128,21 +135,22 @@ while (true) {
     //     }
     // }
 
-    let edge = getClosestEdgeToRemove(path, matrix, dangerNodes, exits);
+    let edge = getClosestEdgeToRemove(path, matrix, dangerNodes, exits, SI);
 
-    printErr('nodeA: ' + edge.a);
-    printErr('nodeB: ' + edge.b);
-    matrix[edge.a][edge.b] = 0;
-    matrix[edge.b][edge.a] = 0;
-    print('' + edge.a + ' ' + edge.b);
+    printErr('nodeA: ' + edge.edgeA);
+    printErr('nodeB: ' + edge.edgeB);
+    matrix[edge.edgeA][edge.edgeB] = 0;
+    matrix[edge.edgeB][edge.edgeA] = 0;
+    print('' + edge.edgeA + ' ' + edge.edgeB);
 }
 
-function getClosestEdgeToRemove(path, matrix, dangerNodes, exits) {
-    let edge = {};
+function getClosestEdgeToRemove(path, matrix, dangerNodes, exits, agentPosition) {
+    let edge = new VirusStepNode();
 
     let closestPath = 99999;
     let closestExit = -1;
     let closestCell;
+    let closestExitNode;
 
     for (let i = 0; i < exits.length; i++) {
         let exit = exits[i];
@@ -152,7 +160,20 @@ function getClosestEdgeToRemove(path, matrix, dangerNodes, exits) {
             closestPath = pathToExit.cost;
             closestExit = exit;
             closestCell = pathToExit.parent;
+            closestExitNode = pathToExit;
         }
+    }
+
+    let nextAgentNode = closestExitNode;
+
+    while (true) {
+
+        if (nextAgentNode.parent.data == agentPosition) {
+            edge.agentNextStep = nextAgentNode.data;
+            break;
+        }
+
+        nextAgentNode = nextAgentNode.parent;
     }
 
     // find danger nodes to close
@@ -182,14 +203,16 @@ function getClosestEdgeToRemove(path, matrix, dangerNodes, exits) {
         }
 
         dangerNodes.splice(indexToRemove, 1);
-        edge.a = exitNodeToClose;
-        edge.b = closestExit;
+        edge.edgeA = exitNodeToClose;
+        edge.edgeB = closestExit;
     }
     // find exit nodes to close
     else {
-        edge.a = closestCell.data;
-        edge.b = closestExit;
+        edge.edgeA = closestCell.data;
+        edge.edgeB = closestExit;
     }
+
+    printErr('nextAgentNode.data: '+ nextAgentNode.data);
 
     return edge;
 }
@@ -212,7 +235,7 @@ function simulateAgent(agentDefaultPosition, matrix, dangerNodes, exits) {
         let path = new Dikstra(copyOfMatrix, agentDefaultPosition);
 
         let node = getClosestEdgeToRemove(path, copyOfMatrix, copyOfDanger, copyOfExits, dangerIndexOrder);
-        copyOfMatrix[edge.a][edge.b] = 0;
-        copyOfMatrix[edge.b][edge.a] = 0;
+        copyOfMatrix[edge.edgeA][edge.edgeB] = 0;
+        copyOfMatrix[edge.edgeB][edge.edgeA] = 0;
     }
 }
