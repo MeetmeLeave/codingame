@@ -23,8 +23,7 @@ function Dikstra(matrix, startNode) {
 
         if (i > 0) {
             closestVertex = this.nextNode(path, visitedNodes);
-        }
-        else {
+        } else {
             closestVertex = path[startNode];
         }
 
@@ -33,9 +32,7 @@ function Dikstra(matrix, startNode) {
 
             for (let j = 0; j < matrix.length; j++) {
                 let combinedCost = closestVertex.cost + matrix[closestVertex.data][j];
-                if (!visitedNodes[j]
-                    && matrix[closestVertex.data][j] !== 0
-                    && combinedCost < path[j].cost) {
+                if (!visitedNodes[j] && matrix[closestVertex.data][j] !== 0 && combinedCost < path[j].cost) {
                     path[j].parent = closestVertex;
                     path[j].cost = closestVertex.cost + matrix[closestVertex.data][j];
                 }
@@ -46,7 +43,7 @@ function Dikstra(matrix, startNode) {
     return path;
 }
 
-Dikstra.prototype.nextNode = function (path, visitedNodes) {
+Dikstra.prototype.nextNode = function(path, visitedNodes) {
     let result;
 
     for (let i = 0; i < path.length; i++) {
@@ -60,6 +57,7 @@ Dikstra.prototype.nextNode = function (path, visitedNodes) {
 
 let matrix = [];
 let exits = [];
+let dangerNodes = [];
 
 let inputs = readline().split(' ');
 let N = parseInt(inputs[0]); // the total number of nodes in the level, including the gateways
@@ -78,20 +76,41 @@ for (let i = 0; i < L; i++) {
     let inputs = readline().split(' ');
     let N1 = parseInt(inputs[0]); // N1 and N2 defines a link between these nodes
     let N2 = parseInt(inputs[1]);
-
+    // printErr('graphNode: ' + N1 + ' ' + N2);
     matrix[N1][N2] = 1;
     matrix[N2][N1] = 1;
 }
 
 // debug matrix
-for (let i = 0; i < N; i++) {
-    printErr(matrix[i]);
-}
+// for (let i = 0; i < N; i++) {
+//     printErr(matrix[i]);
+// }
+
+let potentialDangerNodes = [];
 
 for (let i = 0; i < E; i++) {
     let EI = parseInt(readline()); // the index of a gateway node
     printErr('EI: ' + EI);
     exits.push(EI);
+}
+
+for (let j = 0; j < matrix.length; j++) {
+    for (let i = 0; i < E; i++) {
+        let EI = exits[i];
+
+        let nodeVal = matrix[j][EI];
+        if (nodeVal !== 0) {
+            if (potentialDangerNodes.includes(j) && !dangerNodes.includes(j)) {
+                printErr('EI: ' + EI);
+                printErr('j: ' + j);
+                dangerNodes.push(j);
+            } else if (!potentialDangerNodes.includes(j)) {
+                printErr('EI potential: ' + EI);
+                printErr('j potential: ' + j);
+                potentialDangerNodes.push(j);
+            }
+        }
+    }
 }
 
 // game loop
@@ -101,12 +120,25 @@ while (true) {
 
     let path = new Dikstra(matrix, SI);
 
-    for (let i = 0; i < path.length; i++) {
-        printErr('Vertex: ' + path[i].data + ' Distance: ' + path[i].cost);
-        if (path[i].parent !== undefined) {
-            printErr('Parent: ' + path[i].parent.data);
-        }
-    }
+    // debug distances
+    // for (let i = 0; i < path.length; i++) {
+    //     printErr('Vertex: ' + path[i].data + ' Distance: ' + path[i].cost);
+    //     if (path[i].parent !== undefined) {
+    //         printErr('Parent: ' + path[i].parent.data);
+    //     }
+    // }
+
+    let edge = getClosestEdgeToRemove(path, matrix, dangerNodes, exits);
+
+    printErr('nodeA: ' + edge.a);
+    printErr('nodeB: ' + edge.b);
+    matrix[edge.a][edge.b] = 0;
+    matrix[edge.b][edge.a] = 0;
+    print('' + edge.a + ' ' + edge.b);
+}
+
+function getClosestEdgeToRemove(path, matrix, dangerNodes, exits) {
+    let edge = {};
 
     let closestPath = 99999;
     let closestExit = -1;
@@ -122,11 +154,65 @@ while (true) {
             closestCell = pathToExit.parent;
         }
     }
-    printErr('closestExit: ' + closestExit);
-    printErr('closestCell.data: ' + closestCell.data);
-    matrix[closestCell.data][closestExit] = 0;
-    matrix[closestExit][closestCell.data] = 0;
-    print('' + closestCell.data + ' ' + closestExit);
 
-    //print('0 1'); // Example: 0 1 are the indices of the nodes you wish to sever the link between
+    // find danger nodes to close
+    if (closestPath > 1 && dangerNodes.length > 0) {
+        printErr('dangerNodes.length: ' + dangerNodes.length);
+        closestPath = 99999;
+        let indexToRemove;
+        for (let i = 0; i < dangerNodes.length; i++) {
+            let exit = dangerNodes[i];
+            let pathToExit = path[exit];
+
+            if (closestPath > pathToExit.cost) {
+                closestPath = pathToExit.cost;
+                closestExit = exit;
+                closestCell = pathToExit.parent;
+                indexToRemove = i;
+            }
+        }
+
+        let exitNodeToClose;
+
+        for (let i = 0; i < exits.length; i++) {
+            if (matrix[closestExit][exits[i]] !== 0) {
+                exitNodeToClose = exits[i];
+                break;
+            }
+        }
+
+        dangerNodes.splice(indexToRemove, 1);
+        edge.a = exitNodeToClose;
+        edge.b = closestExit;
+    }
+    // find exit nodes to close
+    else {
+        edge.a = closestCell.data;
+        edge.b = closestExit;
+    }
+
+    return edge;
+}
+
+function simulateAgent(agentDefaultPosition, matrix, dangerNodes, exits) {
+    let copyOfMatrix = matrix.splice(0);
+    let copyOfDanger = dangerNodes.splice(0);
+    let copyOfExits = exits.splice(0);
+
+    let finished = false;
+    let listOfMoves = [];
+    let dangerIndexOrder = [];
+    let isSuccessfull;
+
+    for (let i = 0; i < copyOfDanger.length; i++) {
+        dangerIndexOrder.push(i);
+    }
+
+    while (!finished) {
+        let path = new Dikstra(copyOfMatrix, agentDefaultPosition);
+
+        let node = getClosestEdgeToRemove(path, copyOfMatrix, copyOfDanger, copyOfExits, dangerIndexOrder);
+        copyOfMatrix[edge.a][edge.b] = 0;
+        copyOfMatrix[edge.b][edge.a] = 0;
+    }
 }
