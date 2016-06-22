@@ -43,7 +43,7 @@ function Dikstra(matrix, startNode) {
     return path;
 }
 
-Dikstra.prototype.nextNode = function (path, visitedNodes) {
+Dikstra.prototype.nextNode = function(path, visitedNodes) {
     let result;
 
     for (let i = 0; i < path.length; i++) {
@@ -55,11 +55,13 @@ Dikstra.prototype.nextNode = function (path, visitedNodes) {
     return result;
 };
 
-function VirusStepNode() {
+function VirusSimulationStep() {
+    this.closestPath = 99999;
+    this.closestCell;
+    this.closestExitNode;
+
     this.edgeA = -1;
     this.edgeB = -1;
-
-    this.agentNextStep = -1;
 }
 
 let matrix = [];
@@ -108,12 +110,8 @@ for (let j = 0; j < matrix.length; j++) {
         let nodeVal = matrix[j][EI];
         if (nodeVal !== 0) {
             if (potentialDangerNodes.includes(j) && !dangerNodes.includes(j)) {
-                printErr('EI: ' + EI);
-                printErr('j: ' + j);
                 dangerNodes.push(j);
             } else if (!potentialDangerNodes.includes(j)) {
-                printErr('EI potential: ' + EI);
-                printErr('j potential: ' + j);
                 potentialDangerNodes.push(j);
             }
         }
@@ -135,86 +133,95 @@ while (true) {
     //     }
     // }
 
-    let edge = getClosestEdgeToRemove(path, matrix, dangerNodes, exits, SI);
+    //simulateAgent(SI, matrix, dangerNodes, exits);
+
+    let edge = getClosestEdgeToRemove(path, matrix, dangerNodes, exits);
+
+    print('' + edge.edgeA + ' ' + edge.edgeB);
+}
+
+function getClosestEdgeToRemove(path, matrix, dangerNodes, exits) {
+    let edge = getClosestExitNode(path, exits);
+
+    // find danger nodes to close
+    if (edge.closestPath > 1 && dangerNodes.length > 0) {
+        edge = getClosestDangerNode(path, matrix, dangerNodes, exits)
+    }
 
     printErr('nodeA: ' + edge.edgeA);
     printErr('nodeB: ' + edge.edgeB);
     matrix[edge.edgeA][edge.edgeB] = 0;
     matrix[edge.edgeB][edge.edgeA] = 0;
-    print('' + edge.edgeA + ' ' + edge.edgeB);
+
+    return edge;
 }
 
-function getClosestEdgeToRemove(path, matrix, dangerNodes, exits, agentPosition) {
-    let edge = new VirusStepNode();
-
-    let closestPath = 99999;
-    let closestExit = -1;
-    let closestCell;
-    let closestExitNode;
+function getClosestExitNode(path, exits) {
+    let step = new VirusSimulationStep();
 
     for (let i = 0; i < exits.length; i++) {
         let exit = exits[i];
         let pathToExit = path[exit];
 
-        if (closestPath > pathToExit.cost) {
-            closestPath = pathToExit.cost;
-            closestExit = exit;
-            closestCell = pathToExit.parent;
-            closestExitNode = pathToExit;
+        if (step.closestPath > pathToExit.cost) {
+            step.closestPath = pathToExit.cost;
+            step.closestCell = pathToExit.parent;
+            step.closestExitNode = pathToExit;
         }
     }
 
+    step.edgeA = step.closestCell.data;
+    step.edgeB = step.closestExitNode.data;
+
+    return step;
+}
+
+function getClosestDangerNode(path, matrix, dangerNodes, exits) {
+    let step = new VirusSimulationStep();
+
+    let indexToRemove;
+    for (let i = 0; i < dangerNodes.length; i++) {
+        let exit = dangerNodes[i];
+        let pathToExit = path[exit];
+
+        if (step.closestPath > pathToExit.cost) {
+            step.closestPath = pathToExit.cost;
+            step.closestCell = pathToExit.parent;
+            step.closestExitNode = pathToExit;
+            indexToRemove = i;
+        }
+    }
+
+    let exitNodeToClose;
+
+    for (let i = 0; i < exits.length; i++) {
+        if (matrix[step.closestExitNode.data][exits[i]] !== 0) {
+            exitNodeToClose = exits[i];
+            break;
+        }
+    }
+
+    dangerNodes.splice(indexToRemove, 1);
+    step.edgeA = exitNodeToClose;
+    step.edgeB = step.closestExitNode.data;
+
+    return step;
+}
+
+function makeAgentMove(closestExitNode, agentPosition) {
     let nextAgentNode = closestExitNode;
 
     while (true) {
-
         if (nextAgentNode.parent.data == agentPosition) {
-            edge.agentNextStep = nextAgentNode.data;
             break;
         }
 
         nextAgentNode = nextAgentNode.parent;
     }
 
-    // find danger nodes to close
-    if (closestPath > 1 && dangerNodes.length > 0) {
-        printErr('dangerNodes.length: ' + dangerNodes.length);
-        closestPath = 99999;
-        let indexToRemove;
-        for (let i = 0; i < dangerNodes.length; i++) {
-            let exit = dangerNodes[i];
-            let pathToExit = path[exit];
+    printErr('nextAgentNode.data: ' + nextAgentNode.data);
 
-            if (closestPath > pathToExit.cost) {
-                closestPath = pathToExit.cost;
-                closestExit = exit;
-                closestCell = pathToExit.parent;
-                indexToRemove = i;
-            }
-        }
-
-        let exitNodeToClose;
-
-        for (let i = 0; i < exits.length; i++) {
-            if (matrix[closestExit][exits[i]] !== 0) {
-                exitNodeToClose = exits[i];
-                break;
-            }
-        }
-
-        dangerNodes.splice(indexToRemove, 1);
-        edge.edgeA = exitNodeToClose;
-        edge.edgeB = closestExit;
-    }
-    // find exit nodes to close
-    else {
-        edge.edgeA = closestCell.data;
-        edge.edgeB = closestExit;
-    }
-
-    printErr('nextAgentNode.data: '+ nextAgentNode.data);
-
-    return edge;
+    return nextAgentNode.data;
 }
 
 function simulateAgent(agentDefaultPosition, matrix, dangerNodes, exits) {
@@ -222,20 +229,31 @@ function simulateAgent(agentDefaultPosition, matrix, dangerNodes, exits) {
     let copyOfDanger = dangerNodes.splice(0);
     let copyOfExits = exits.splice(0);
 
-    let finished = false;
     let listOfMoves = [];
-    let dangerIndexOrder = [];
-    let isSuccessfull;
+    //let dangerIndexOrder = [];
+    let isSuccessfull = true;
+    let node;
 
-    for (let i = 0; i < copyOfDanger.length; i++) {
-        dangerIndexOrder.push(i);
-    }
+    // for (let i = 0; i < copyOfDanger.length; i++) {
+    //     dangerIndexOrder.push(i);
+    // }
 
-    while (!finished) {
+    for (let i = 0; i < 50; i++) {
+        if (i !== 0) {
+            agentDefaultPosition = makeAgentMove(node.closestExitNode, agentDefaultPosition);
+        }
+
         let path = new Dikstra(copyOfMatrix, agentDefaultPosition);
 
-        let node = getClosestEdgeToRemove(path, copyOfMatrix, copyOfDanger, copyOfExits, dangerIndexOrder);
-        copyOfMatrix[edge.edgeA][edge.edgeB] = 0;
-        copyOfMatrix[edge.edgeB][edge.edgeA] = 0;
+        node = getClosestEdgeToRemove(path, copyOfMatrix, copyOfDanger, copyOfExits);
+
+        for (let i = 0; i < exits.length; i++) {
+            let exit = exits[i];
+
+            if (exit.data == agentDefaultPosition) {
+                isSuccessfull = false;
+                break;
+            }
+        }
     }
 }
