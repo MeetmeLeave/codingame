@@ -34,7 +34,11 @@ function Dikstra(matrix, startNode) {
                 let combinedCost = closestVertex.cost + matrix[closestVertex.data][j];
                 if (!visitedNodes[j] && matrix[closestVertex.data][j] !== 0 && combinedCost < path[j].cost) {
                     path[j].parent = closestVertex;
-                    path[j].cost = closestVertex.cost + matrix[closestVertex.data][j];
+                    path[j].cost = combinedCost;
+
+                    printErr('path[j].data: ' + j);
+                    printErr('path[j].parent.data: ' + path[j].parent.data);
+                    printErr('path[j].cost: ' + path[j].cost);
                 }
             }
         }
@@ -43,7 +47,7 @@ function Dikstra(matrix, startNode) {
     return path;
 }
 
-Dikstra.prototype.nextNode = function (path, visitedNodes) {
+Dikstra.prototype.nextNode = function(path, visitedNodes) {
     let result;
 
     for (let i = 0; i < path.length; i++) {
@@ -65,6 +69,7 @@ function VirusSimulationStep() {
 }
 
 let matrix = [];
+let matrixCopy = [];
 let exits = [];
 let dangerNodes = [];
 
@@ -79,6 +84,7 @@ for (let i = 0; i < N; i++) {
         row.push(0);
     }
     matrix.push(row);
+    matrixCopy.push(row);
 }
 
 for (let i = 0; i < L; i++) {
@@ -88,6 +94,9 @@ for (let i = 0; i < L; i++) {
     // printErr('graphNode: ' + N1 + ' ' + N2);
     matrix[N1][N2] = 1;
     matrix[N2][N1] = 1;
+
+    matrixCopy[N1][N2] = 1;
+    matrixCopy[N2][N1] = 1;
 }
 
 // debug matrix
@@ -119,6 +128,8 @@ for (let j = 0; j < matrix.length; j++) {
 }
 
 let index = 0;
+let listOfPositions = [];
+let listOfEdges = [];
 
 // game loop
 while (true) {
@@ -143,11 +154,48 @@ while (true) {
     // matrix[edge.edgeB][edge.edgeA] = 0;
 
     // simulateAgentMove(matrix, SI, exits);
+    if (listOfEdges.length === 0) {
+        let listOfNodes = simulateAgent(SI, matrix, dangerNodes, exits);
 
-    let listOfMobes = simulateAgent(SI, matrix, dangerNodes, exits);
-    let edge = listOfMobes[index];
+        for (var key of listOfNodes.keys()) {
+            listOfEdges.push(key);
+        }
+
+        for (var value of listOfNodes.values()) {
+            listOfPositions.push(value);
+        }
+    }
+
+    let position = listOfPositions[index];
+    let edge;
+
+    printErr('Predicted position: ' + position);
+    if (SI === position) {
+        edge = listOfEdges[index];
+        printErr('Predicted edge');
+    } else {
+        let path = new Dikstra(matrixCopy, SI);
+
+        for (let p of matrixCopy) {
+            printErr(p);
+        }
+
+        for (let p of path) {
+            printErr('' + p.data + ' - ' + p.cost);
+        }
+
+        edge = getClosestExitNode(path, exits);
+        printErr(path.length);
+        printErr(edge.edgeA);
+        printErr(edge.edgeB);
+        printErr('Unpredicted edge');
+    }
+
     index += 1;
 
+    matrixCopy[edge.edgeA][edge.edgeB] = 0;
+    matrixCopy[edge.edgeB][edge.edgeA] = 0;
+    printErr('matrixCopy[edge.edgeA][edge.edgeB]: ' + edge.edgeA + ' ' + edge.edgeB);
     print('' + edge.edgeA + ' ' + edge.edgeB);
 }
 
@@ -158,8 +206,7 @@ function getClosestEdgeToRemove(path, matrix, dangerNodes, exits, dangerIndex) {
     if (edge.closestPath > 1 && dangerNodes.length > 0) {
         if (dangerIndex === undefined) {
             edge = getClosestDangerNode(path, matrix, dangerNodes, exits);
-        }
-        else {
+        } else {
             edge = getDangerNodeByIndex(path, matrix, dangerNodes, exits, dangerIndex);
         }
     }
@@ -173,6 +220,11 @@ function getClosestExitNode(path, exits) {
     for (let i = 0; i < exits.length; i++) {
         let exit = exits[i];
         let pathToExit = path[exit];
+
+        printErr('exit: ' + exit);
+        printErr('pathToExit.data: ' + pathToExit.data);
+        printErr('pathToExit.cost: ' + pathToExit.cost);
+        printErr('step.closestPath: ' + step.closestPath);
 
         if (step.closestPath > pathToExit.cost) {
             step.closestPath = pathToExit.cost;
@@ -276,22 +328,22 @@ function simulateAgentMove(matrix, SI, exits) {
 
     let edge = getClosestExitNode(path, exits);
 
-    makeAgentMove(edge.closestExitNode, SI);
+    return makeAgentMove(edge.closestExitNode, SI);
 }
 
 function simulateAgent(agentDefaultPosition, matrix, dangerNodes, exits) {
-    let copyOfMatrix = matrix.splice(0);
-    let copyOfDanger = dangerNodes.splice(0);
-    let copyOfExits = exits.splice(0);
+    let copyOfMatrix = matrix.slice(0);
+    let copyOfDanger = dangerNodes.slice(0);
+    let copyOfExits = exits.slice(0);
     let currentAgentPosition = agentDefaultPosition;
 
-    let listOfMoves = [];
+    let listOfMoves = new Map();
     let isSuccessfull = false;
     let indexOfDanger = 0;
 
     while (!isSuccessfull) {
         for (let i = 0; i < 50; i++) {
-            let path = new Dikstra(matrix, currentAgentPosition);
+            let path = new Dikstra(copyOfMatrix, currentAgentPosition);
 
             let edge = getClosestEdgeToRemove(path, copyOfMatrix, copyOfDanger, copyOfExits, indexOfDanger);
 
@@ -299,24 +351,29 @@ function simulateAgent(agentDefaultPosition, matrix, dangerNodes, exits) {
             printErr('nodeB: ' + edge.edgeB);
             copyOfMatrix[edge.edgeA][edge.edgeB] = 0;
             copyOfMatrix[edge.edgeB][edge.edgeA] = 0;
-            listOfMoves.push(edge);
-            currentAgentPosition = simulateAgentMove(copyOfMatrix, SI, exits);
+            listOfMoves.set(edge, currentAgentPosition);
+            printErr('currentAgentPosition: ' + currentAgentPosition);
+            currentAgentPosition = simulateAgentMove(copyOfMatrix, currentAgentPosition, copyOfExits);
 
             let agentEscaped = false;
 
             for (let i = 0; i < copyOfExits.length; i++) {
                 if (copyOfExits[i] === currentAgentPosition) {
                     agentEscaped = true;
+                    printErr('Agent escaped!');
                     break;
                 }
             }
 
             if (currentAgentPosition === undefined) {
+                printErr('Agent blocked!');
                 isSuccessfull = true;
                 break;
-            }
-            else if (agentEscaped) {
-                copyOfMatrix = matrix.splice(0);
+            } else if (agentEscaped) {
+                printErr('Agent escaped!');
+                copyOfMatrix = matrix.slice(0);
+                copyOfDanger = dangerNodes.slice(0);
+                copyOfExits = exits.slice(0);
                 currentAgentPosition = agentDefaultPosition;
 
                 listOfMoves = [];
