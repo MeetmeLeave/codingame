@@ -80,11 +80,13 @@ let E = parseInt(inputs[2]); // the number of exit gateways
 
 for (let i = 0; i < N; i++) {
     let row = [];
+    // let rowCopy = [];
     for (let j = 0; j < N; j++) {
         row.push(0);
+        // rowCopy.push(0);
     }
     matrix.push(row);
-    matrixCopy.push(row);
+    // matrixCopy.push(rowCopy);
 }
 
 for (let i = 0; i < L; i++) {
@@ -95,8 +97,8 @@ for (let i = 0; i < L; i++) {
     matrix[N1][N2] = 1;
     matrix[N2][N1] = 1;
 
-    matrixCopy[N1][N2] = 1;
-    matrixCopy[N2][N1] = 1;
+    // matrixCopy[N1][N2] = 1;
+    // matrixCopy[N2][N1] = 1;
 }
 
 // debug matrix
@@ -126,6 +128,8 @@ for (let j = 0; j < matrix.length; j++) {
         }
     }
 }
+
+matrixCopy = JSON.parse(JSON.stringify(matrix));
 
 let index = 0;
 let listOfPositions = [];
