@@ -35,10 +35,6 @@ function Dikstra(matrix, startNode) {
                 if (!visitedNodes[j] && matrix[closestVertex.data][j] !== 0 && combinedCost < path[j].cost) {
                     path[j].parent = closestVertex;
                     path[j].cost = combinedCost;
-
-                    printErr('path[j].data: ' + j);
-                    printErr('path[j].parent.data: ' + path[j].parent.data);
-                    printErr('path[j].cost: ' + path[j].cost);
                 }
             }
         }
@@ -80,13 +76,10 @@ let E = parseInt(inputs[2]); // the number of exit gateways
 
 for (let i = 0; i < N; i++) {
     let row = [];
-    // let rowCopy = [];
     for (let j = 0; j < N; j++) {
         row.push(0);
-        // rowCopy.push(0);
     }
     matrix.push(row);
-    // matrixCopy.push(rowCopy);
 }
 
 for (let i = 0; i < L; i++) {
@@ -96,9 +89,6 @@ for (let i = 0; i < L; i++) {
     // printErr('graphNode: ' + N1 + ' ' + N2);
     matrix[N1][N2] = 1;
     matrix[N2][N1] = 1;
-
-    // matrixCopy[N1][N2] = 1;
-    // matrixCopy[N2][N1] = 1;
 }
 
 // debug matrix
@@ -157,7 +147,6 @@ while (true) {
     // matrix[edge.edgeA][edge.edgeB] = 0;
     // matrix[edge.edgeB][edge.edgeA] = 0;
 
-    // simulateAgentMove(matrix, SI, exits);
     if (listOfEdges.length === 0) {
         let listOfNodes = simulateAgent(SI, matrix, dangerNodes, exits);
 
@@ -180,13 +169,13 @@ while (true) {
     } else {
         let path = new Dikstra(matrixCopy, SI);
 
-        for (let p of matrixCopy) {
-            printErr(p);
-        }
+        // for (let p of matrixCopy) {
+        //     printErr(p);
+        // }
 
-        for (let p of path) {
-            printErr('' + p.data + ' - ' + p.cost);
-        }
+        // for (let p of path) {
+        //     printErr('' + p.data + ' - ' + p.cost);
+        // }
 
         edge = getClosestExitNode(path, exits);
         printErr(path.length);
@@ -199,7 +188,7 @@ while (true) {
 
     matrixCopy[edge.edgeA][edge.edgeB] = 0;
     matrixCopy[edge.edgeB][edge.edgeA] = 0;
-    printErr('matrixCopy[edge.edgeA][edge.edgeB]: ' + edge.edgeA + ' ' + edge.edgeB);
+    // printErr('matrixCopy[edge.edgeA][edge.edgeB]: ' + edge.edgeA + ' ' + edge.edgeB);
     print('' + edge.edgeA + ' ' + edge.edgeB);
 }
 
@@ -225,10 +214,10 @@ function getClosestExitNode(path, exits) {
         let exit = exits[i];
         let pathToExit = path[exit];
 
-        printErr('exit: ' + exit);
-        printErr('pathToExit.data: ' + pathToExit.data);
-        printErr('pathToExit.cost: ' + pathToExit.cost);
-        printErr('step.closestPath: ' + step.closestPath);
+        // printErr('exit: ' + exit);
+        // printErr('pathToExit.data: ' + pathToExit.data);
+        // printErr('pathToExit.cost: ' + pathToExit.cost);
+        // printErr('step.closestPath: ' + step.closestPath);
 
         if (step.closestPath > pathToExit.cost) {
             step.closestPath = pathToExit.cost;
@@ -336,9 +325,9 @@ function simulateAgentMove(matrix, SI, exits) {
 }
 
 function simulateAgent(agentDefaultPosition, matrix, dangerNodes, exits) {
-    let copyOfMatrix = matrix.slice(0);
-    let copyOfDanger = dangerNodes.slice(0);
-    let copyOfExits = exits.slice(0);
+    let copyOfMatrix = JSON.parse(JSON.stringify(matrix));
+    let copyOfDanger = JSON.parse(JSON.stringify(dangerNodes));
+    let copyOfExits = JSON.parse(JSON.stringify(exits));
     let currentAgentPosition = agentDefaultPosition;
 
     let listOfMoves = new Map();
@@ -375,12 +364,12 @@ function simulateAgent(agentDefaultPosition, matrix, dangerNodes, exits) {
                 break;
             } else if (agentEscaped) {
                 printErr('Agent escaped!');
-                copyOfMatrix = matrix.slice(0);
-                copyOfDanger = dangerNodes.slice(0);
-                copyOfExits = exits.slice(0);
+                copyOfMatrix = JSON.parse(JSON.stringify(matrix));
+                copyOfDanger = JSON.parse(JSON.stringify(dangerNodes));
+                copyOfExits = JSON.parse(JSON.stringify(exits));
                 currentAgentPosition = agentDefaultPosition;
 
-                listOfMoves = [];
+                listOfMoves = new Map();
                 isSuccessfull = false;
                 indexOfDanger += 1;
                 break;
