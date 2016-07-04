@@ -1,8 +1,3 @@
-/**
- * Auto-generated code below aims at helping you parse
- * the standard input according to the problem statement.
- **/
-
 /* 
     I think this is like a packman game, n ghosts and the player.
     From the analysis of the game, I found it is ending when any of the other mobiles is reaching same coordinates as player
@@ -37,15 +32,13 @@ var gameState = {
 
             if (this.currentY > firstInitInput) {
                 result += 'S';
-            }
-            else if (this.currentY < firstInitInput) {
+            } else if (this.currentY < firstInitInput) {
                 result += 'N';
             }
 
             if (this.currentX > secondInitInput) {
                 result += 'W';
-            }
-            else if (this.currentX < secondInitInput) {
+            } else if (this.currentX < secondInitInput) {
                 result += 'E';
             }
 
@@ -66,16 +59,14 @@ var gameState = {
                 case 'SW':
                     if (this.southTile === '_') {
                         return 'D';
-                    }
-                    else if (this.westTile === '_') {
+                    } else if (this.westTile === '_') {
                         return 'E';
                     }
                     break;
                 case 'SE':
                     if (this.southTile === '_') {
                         return 'D';
-                    }
-                    else if (this.eastTile === '_') {
+                    } else if (this.eastTile === '_') {
                         return 'A';
                     }
                     break;
@@ -87,16 +78,14 @@ var gameState = {
                 case 'NW':
                     if (this.northTile === '_') {
                         return 'C';
-                    }
-                    else if (this.westTile === '_') {
+                    } else if (this.westTile === '_') {
                         return 'E';
                     }
                     break;
                 case 'NE':
                     if (this.northTile === '_') {
                         return 'C';
-                    }
-                    else if (this.eastTile === '_') {
+                    } else if (this.eastTile === '_') {
                         return 'A';
                     }
                     break;
@@ -168,8 +157,7 @@ var gameState = {
             northTile: '',
             southTile: '',
             eastTile: '',
-            westTile:
-            '',
+            westTile: '',
 
             drawModel: function(mapCanvas) {
                 switch (this.index) {
@@ -246,8 +234,7 @@ while (true) {
             if (isplayer) {
                 gameState.initializePlayer();
             }
-        }
-        else {
+        } else {
             gameState.updateUnitState(i, parseInt(inputs[0]), parseInt(inputs[1]));
         }
     }
