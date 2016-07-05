@@ -1,6 +1,11 @@
-'use strict';
+// UMNE TALMAR RAHTAINE NIXENEN UMIR
+// UMNE TALMAR RAHTAINE NIXENEN UBQR
 
+'use strict';
+const alphabetSize = 26;
 let currentIndex = 0;
+let previousIndex = 0;
+let circles = 0;
 
 let alphabet = new Map();
 alphabet.set(' ', 0);
@@ -35,12 +40,28 @@ var magicPhrase = readline();
 
 let result = '';
 
-for (let i in magicPhrase) {
-    let index = alphabet.get(i);
+for (let i = 0; i < magicPhrase.length; i++) {
+    let index = alphabet.get(magicPhrase[i]);
 
-    if (index === currentIndex) {
+    if (i > 29) {
+        circles = Math.round(i / 29);
+        let indexVal = i - (29 * circles);
+        printErr('indexVal:' + indexVal);
+        let nextIndex = magicPhrase[indexVal];
+        printErr('nextIndex:' + nextIndex);
+        currentIndex = alphabet.get(nextIndex);
+    }
+
+    printErr('circles:' + circles);
+    printErr('currentIndex:' + currentIndex);
+    printErr('i:' + i);
+    printErr('previousIndex:' + previousIndex);
+    printErr('index:' + index);
+    printErr('###############');
+    if (index === previousIndex) {
         result += '.';
     } else {
+        result += '>';
         let plus = Math.abs(currentIndex - index); //todo
         let minus = Math.abs(index - currentIndex); //todo
         let sign = plus > minus ? '-' : '+';
@@ -55,8 +76,10 @@ for (let i in magicPhrase) {
             }
         }
 
-        result += '.>';
+        result += '.';
     }
+
+    previousIndex = index;
 }
 
 print(result);
