@@ -72,7 +72,7 @@ Graph.prototype.calculateCentricities = function() {
     let turnesRadiusIsUnchanged = 0;
 
     for (let i = parseInt(nodesToExplore.length / 2); i < nodesToExplore.length;) {
-        if (turnesRadiusIsUnchanged >= 5) {
+        if (turnesRadiusIsUnchanged >= 3) {
             break;
         }
 
