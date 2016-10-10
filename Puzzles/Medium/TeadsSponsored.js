@@ -1,73 +1,42 @@
-/*   Possible optimization :
-*    1 - Use more efficient data structures, the JS array is flexible to be both stack and queue struct types, but it is very unefficient as a queue used here.
-*    2 - Apply tree structure, for storage of nodes after first BFS exploration. 
-*    I believe this will help to minimize amount of subsequent BFS runs instead of running it for each found node in the longest path.
-*/
 'use strict';
 
 function Graph() {
-    this.vertexes = [];
+    this.vertexes = new Map();
     this.radius = undefined;
     this.diameter = undefined;
 }
 
-Graph.prototype.clearDepthValues = function () {
-    for (let i = 0; i < this.vertexes.length; i++) {
-        let current = this.vertexes[i];
-        current.depth = -1;
-        current.parent = undefined;
-    }
+Graph.prototype.clearDepthValues = function() {
+    this.vertexes.forEach(function(value, key, map) {
+        value.depth = -1;
+        value.parent = undefined;
+    }, this);
 };
 
-Graph.prototype.addEdge = function (data1, data2) {
+Graph.prototype.addEdge = function(data1, data2) {
     let vertex1;
     let vertex2;
 
-    let index1 = this.vertexDataExists(data1);
-    let index2 = this.vertexDataExists(data2);
-
-    if (index1 >= 0) {
-        vertex1 = this.vertexes[index1];
-    }
-    else {
+    if (this.vertexes.has(data1)) {
+        vertex1 = this.vertexes.get(data1);
+    } else {
         vertex1 = new Vertex(data1);
+        this.vertexes.set(data1, vertex1);
     }
 
-    if (index2 >= 0) {
-        vertex2 = this.vertexes[index2];
-    }
-    else {
+    if (this.vertexes.has(data2)) {
+        vertex2 = this.vertexes.get(data2);
+    } else {
         vertex2 = new Vertex(data2);
+        this.vertexes.set(data2, vertex2);
     }
 
     vertex1.addEdge(vertex2);
     vertex2.addEdge(vertex1);
-
-    if (index1 === -1) {
-        this.vertexes.push(vertex1);
-    }
-
-    if (index2 === -1) {
-        this.vertexes.push(vertex2);
-    }
 };
 
-// TODO remove vertex completely if there are no edges connected to it
-Graph.prototype.removeEdge = function (data1) {
-    let index = this.vertexDataExists(data1);
-    if (index >= 0) {
-        let vertex = this.vertexes[index];
-
-        for (let i = 0; i < vertex.edges; i++) {
-
-        }
-
-        this.vertexes.splice(index, 1);
-    }
-};
-
-Graph.prototype.calculateCentricities = function () {
-    let startNode = this.vertexes[0];
+Graph.prototype.calculateCentricities = function() {
+    let startNode = this.vertexes.values().next().value;
     let lastElement = this.RunBFSOverGraph(startNode);
     let radius = startNode.centricity = lastElement.depth;
 
@@ -80,8 +49,7 @@ Graph.prototype.calculateCentricities = function () {
         nodesToExplore.push(nextParent);
         if (!nextParent.parent.equals(startNode)) {
             nextParent = nextParent.parent;
-        }
-        else {
+        } else {
             break;
         }
     }
@@ -115,8 +83,7 @@ Graph.prototype.calculateCentricities = function () {
         if (radius > result.depth) {
             radius = nextParent.centricity = result.depth;
             turnesRadiusIsUnchanged = 0;
-        }
-        else {
+        } else {
             turnesRadiusIsUnchanged += 1;
         }
     }
@@ -126,7 +93,7 @@ Graph.prototype.calculateCentricities = function () {
     this.diameter = this.radius * 2;
 };
 
-Graph.prototype.RunBFSOverGraph = function (node) {
+Graph.prototype.RunBFSOverGraph = function(node) {
     let queue = []; // ^_^ hope the shift will work this time
     this.clearDepthValues();
     let maxCost = 0;
@@ -155,26 +122,6 @@ Graph.prototype.RunBFSOverGraph = function (node) {
     return lastElement;
 };
 
-Graph.prototype.vertexDataExists = function (data) {
-    for (let i = 0; i < this.vertexes.length; i++) {
-        if (this.vertexes[i].data === data) {
-            return i;
-        }
-    }
-
-    return -1;
-};
-
-Graph.prototype.vertexExists = function (vertex) {
-    for (let i = 0; i < this.vertexes.length; i++) {
-        if (this.vertexes[i].equals(vertex)) {
-            return i;
-        }
-    }
-
-    return -1;
-};
-
 function Vertex(data) {
     this.edges = [];
     this.depth = -1;
@@ -183,11 +130,11 @@ function Vertex(data) {
     this.centricity = -1;
 }
 
-Vertex.prototype.IsVisited = function () {
+Vertex.prototype.IsVisited = function() {
     return this.depth >= 0;
 };
 
-Vertex.prototype.equals = function (edge) {
+Vertex.prototype.equals = function(edge) {
     if (edge.data === this.data) {
         return true;
     }
@@ -195,7 +142,7 @@ Vertex.prototype.equals = function (edge) {
     return false;
 };
 
-Vertex.prototype.edgeExists = function (edge) {
+Vertex.prototype.edgeExists = function(edge) {
     for (let i = 0; i < this.edges.length; i++) {
         if (this.edges[i].equals(edge)) {
             return i;
@@ -205,7 +152,7 @@ Vertex.prototype.edgeExists = function (edge) {
     return -1;
 };
 
-Vertex.prototype.addEdge = function (vertex, weight) {
+Vertex.prototype.addEdge = function(vertex, weight) {
     let edge = new Edge(this, vertex, weight);
     if (this.edgeExists(edge) === -1) {
         this.edges.push(edge);
@@ -215,7 +162,7 @@ Vertex.prototype.addEdge = function (vertex, weight) {
     return false;
 };
 
-Vertex.prototype.removeEdge = function (vertex) {
+Vertex.prototype.removeEdge = function(vertex) {
     let edge = new Edge(this, vertex, 0);
     let index = this.edgeExists(edge);
     if (index >= 0) {
@@ -232,7 +179,7 @@ function Edge(vertex1, vertex2, weight) {
     this.weight = weight;
 }
 
-Edge.prototype.equals = function (edge) {
+Edge.prototype.equals = function(edge) {
     if (edge.vertex1.equals(this.vertex1) && edge.vertex2.equals(this.vertex2)) {
         return true;
     }
@@ -240,7 +187,7 @@ Edge.prototype.equals = function (edge) {
     return false;
 };
 
-Edge.prototype.getToVertex = function (node) {
+Edge.prototype.getToVertex = function(node) {
     return node.equals(this.vertex1) ? this.vertex2 : this.vertex1;
 };
 
